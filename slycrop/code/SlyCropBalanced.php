@@ -21,7 +21,7 @@ class SlyCropBalanced extends SlyCrop{
 		// Get the offset for cropping the image further
 		$this->origalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
 		$offset = $this->getRandomEdgeOffset($this->origalImage, $targetWidth, $targetHeight);
-		$this->spot($this->origalImage, $offset['x'], $offset['y'], 'green');
+		$this->dot($this->origalImage, $offset['x'], $offset['y'], 'green');
 		return $this->origalImage;
 	}
 

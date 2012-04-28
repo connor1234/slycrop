@@ -1,14 +1,16 @@
 <?php
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
- * Description of SlyCropEntropy
+ * SlyCropEntropy
  *
- * @author stig
+ * This class finds the a position in the picture with the most energy in it.
+ *
+ * Energy is in this case calculated by this
+ *
+ * 1. Take the image and turn it into black and white
+ * 2. Run a edge filter so that we're left with only edges.
+ * 3. Find a piece in the picture that has the highest entropy (i.e. most edges)
+ * 4. Return coordinates that makes sure that this piece of the picture is not cropped 'away'
+ *
  */
 class SlyCropEntropy extends SlyCrop {
 
@@ -27,7 +29,8 @@ class SlyCropEntropy extends SlyCrop {
 		// Get the offset for cropping the image further
 		$this->origalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
 		$offset = $this->getEntropyOffsets($this->origalImage, $targetWidth, $targetHeight);
-		$this->origalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
+		#$this->origalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
+		$this->dot($this->origalImage, $offset['x'], $offset['y'], 'green');
 		return $this->origalImage;
 	}
 
@@ -53,6 +56,7 @@ class SlyCropEntropy extends SlyCrop {
 	}
 
 	/**
+	 * Get the offset of where the crop should start
 	 *
 	 * @param Imagick $image
 	 * @param int $targetHeight
@@ -62,61 +66,84 @@ class SlyCropEntropy extends SlyCrop {
 	 */
 	protected function getOffsetFromEntropy(Imagick $image, $targetWidth, $targetHeight) {
 		$size = $image->getImageGeometry();
-		$originalWidth = $scanWidth = $size['width'];
-		$originalHeight = $scanHeight = $size['height'];
-		$goalY = $goalX = 0;
+		$originalWidth = $rightX = $size['width'];
+		$originalHeight = $bottomY = $size['height'];
+		$topY = 0;
+		$leftX = 0;
 
+		// Just an arbitrary size of slice size, e.g: for 200X300 this is equal to slicing
+		// it in 6.7 times on the width and 10 times on the height
 		$sliceSize = ceil($this->area($image) / (1024 * 2));
+		
+		$leftSlice = null;
+		$rightSlice = null;
 
-		$firstImage = null;
-		$otherImage = null;
+		// while there still are uninvestigated areas of the image
+		while($rightX-$leftX > $targetWidth) {
+			// Make sure that we don't try to slice outside the picture
+			$sliceSize = min(array(($rightX-$leftX-$targetWidth), $sliceSize));
 
-		while($scanHeight-$goalY > $targetHeight) {
-			$slizeSize = min(array($scanHeight - $goalY - $targetHeight, $sliceSize));
-			if(!$firstImage) {
-				$firstImage = clone($image);
-				$firstImage->cropImage($originalWidth, $slizeSize, 0, $goalY);
+			// Left slice
+			if(!$leftSlice) {
+				$leftSlice = clone($image);
+				$leftSlice->cropImage($sliceSize, $originalHeight, $leftX, 0);
 			}
-			if(!$otherImage) {
-				$otherImage = clone($image);
-				$otherImage->cropImage($originalWidth, $slizeSize, 0, $scanHeight - $slizeSize);
+			// Right slice
+			if(!$rightSlice) {
+				$rightSlice = clone($image);
+				$rightSlice->cropImage($sliceSize, $originalHeight, $rightX - $sliceSize, 0);
 			}
-			// Remove the slice with the least entropy
-			if($this->grayscaleEntropy($firstImage) < $this->grayscaleEntropy($otherImage)) {
-				$goalY += $slizeSize; $firstImage = null;
+			// rightSlice has more entropy, so remove leftSlice and bump leftX to the right
+			if($this->grayscaleEntropy($leftSlice) < $this->grayscaleEntropy($rightSlice)) {
+
+				$leftX += $sliceSize;
+				$leftSlice = null;
 			} else {
-				$scanHeight -= $slizeSize; $otherImage = null;
+				$rightX -= $sliceSize;
+				$rightSlice = null;
 			}
 		}
 
-		$firstImage = $otherImage = null;
+		$topSlice = null;
+		$bottomSlice = null;
 
-		while($scanWidth-$goalX > $targetWidth) {
-			$sliceSize = min(array(($scanWidth-$goalX-$targetWidth), $sliceSize));
-			if(!$firstImage) {
-				$firstImage = clone($image);
-				$firstImage->cropImage($sliceSize, $originalHeight, $goalX, 0);
+		// while there still are uninvestigated areas of the image
+		while($bottomY-$topY > $targetHeight) {
+			// Make sure that we don't try to slice outside the picture
+			$slizeSize = min(array($bottomY - $topY - $targetHeight, $sliceSize));
+
+			// Make a top slice
+			if(!$topSlice) {
+				$topSlice = clone($image);
+				$topSlice->cropImage($originalWidth, $slizeSize, 0, $topY);
 			}
-			if(!$otherImage) {
-				$otherImage = clone($image);
-				$otherImage->cropImage($sliceSize, $originalHeight, $scanWidth - $sliceSize, 0);
+			// Make a bottom slice
+			if(!$bottomSlice) {
+				$bottomSlice = clone($image);
+				$bottomSlice->cropImage($originalWidth, $slizeSize, 0, $bottomY - $slizeSize);
 			}
-			// Remove the slice with the least entropy
-			if($this->grayscaleEntropy($firstImage) < $this->grayscaleEntropy($otherImage)) {
-				$goalX += $sliceSize; $firstImage = null;
+			// bottomSlice has more entropy, so remove topSlice and bump topY down 
+			if($this->grayscaleEntropy($topSlice) < $this->grayscaleEntropy($bottomSlice)) {
+				$topY += $slizeSize;
+				$topSlice = null;
 			} else {
-				$scanWidth -= $sliceSize; $otherImage = null;
+				$bottomY -= $slizeSize;
+				$bottomSlice = null;
 			}
 		}
 
-		return array('x' => $goalX, 'y' => $goalY);
+		return array('x' => $leftX, 'y' => $topY);
 	}
 
 	/**
-	 * Calculate the entropy for this image
+	 * Calculate the entropy for this image.
+	 *
+	 * A higher value of entropy means more noise / liveliness / color / business
 	 *
 	 * @param Imagick $image
 	 * @return float
+	 *
+	 * @see http://brainacle.com/calculating-image-entropy-with-python-how-and-why.html
 	 */
 	protected function grayscaleEntropy(Imagick $image) {
 		$area = $this->area($image);
@@ -131,7 +158,7 @@ class SlyCropEntropy extends SlyCrop {
 		return -$value;
 	}
 
-		/**
+	/**
 	 * Find out the entropy for a color image by taking into account the YUV color
 	 * model: http://en.wikipedia.org/wiki/YUV
 	 *
@@ -162,6 +189,5 @@ class SlyCropEntropy extends SlyCrop {
 		}
 
 		return -$value;
-
 	}
 }

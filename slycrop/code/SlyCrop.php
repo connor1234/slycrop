@@ -2,6 +2,8 @@
 /**
  * SlyCrop
  *
+ * Base class for all Croppers
+ *
  */
 class SlyCrop {
 
@@ -51,6 +53,7 @@ class SlyCrop {
 	}
 	
 	/**
+	 * Get the area in pixels for this image
 	 *
 	 * @param Imagick $image
 	 * @return int
@@ -79,9 +82,17 @@ class SlyCrop {
 		return array('width' => (int) ($source['width'] / $scale), 'height' => (int) ($source['height'] / $scale));
 	}
 
-	protected function spot($image, $x, $y, $color="red") {
+	/**
+	 * Put a dot on the image, good for debugging
+	 *
+	 * @param Imagick $image
+	 * @param int $x
+	 * @param int $y
+	 * @param string $color
+	 */
+	protected function dot(Imagick$image, $x, $y, $color="red") {
 		$circle= new ImagickDraw();$circle->setFillColor($color);
-		$circle->circle($x, $y, $x, $y+2);
+		$circle->circle($x, $y, $x, $y+6);
 		$image->drawImage($circle);
 	}
 }
