@@ -10,6 +10,6 @@ Just for ease of testing and development it's currently implemented as a SilverS
 
 Kudos goes to these people for example code and explanations:
 
-Jue Wang - [Opticrop](http://jueseph.com/2010/06/opticrop-content-aware-cropping-with-php-and-imagemagick/)
-Peter Sobot [A Use for Smartphone Photos](http://petersobot.com/blog/a-use-for-smartphone-photos/)
-zaeleus [Content Aware Kropping by Entropy](https://gist.github.com/a54cd41137b678935c91)
+- Jue Wang - [Opticrop](http://jueseph.com/2010/06/opticrop-content-aware-cropping-with-php-and-imagemagick/)
+- Peter Sobot [A Use for Smartphone Photos](http://petersobot.com/blog/a-use-for-smartphone-photos/)
+- zaeleus [Content Aware Kropping by Entropy](https://gist.github.com/a54cd41137b678935c91)
