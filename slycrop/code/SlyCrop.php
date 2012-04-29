@@ -23,7 +23,7 @@ class SlyCrop {
 	 *
 	 * @var Imagick
 	 */
-	protected $origalImage = null;
+	protected $originalImage = null;
 
 
 	/**
@@ -49,7 +49,7 @@ class SlyCrop {
 	 */
 	public function __construct($imagePath) {
 		$this->imagePath = $imagePath;
-		$this->origalImage = new Imagick($imagePath);
+		$this->originalImage = new Imagick($imagePath);
 	}
 	
 	/**

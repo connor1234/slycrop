@@ -25,13 +25,12 @@ class SlyCropEntropy extends SlyCrop {
 
 		// First get the size that we can use to safely trim down the image to
 		// without cropping any sides
-		$crop = $this->getSafeResizeOffset($this->origalImage, $targetWidth, $targetHeight);
+		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
 		// Get the offset for cropping the image further
-		$this->origalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
-		$offset = $this->getEntropyOffsets($this->origalImage, $targetWidth, $targetHeight);
-		#$this->origalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
-		$this->dot($this->origalImage, $offset['x'], $offset['y'], 'green');
-		return $this->origalImage;
+		$this->originalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
+		$offset = $this->getEntropyOffsets($this->originalImage, $targetWidth, $targetHeight);
+		$this->originalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
+		return $this->originalImage;
 	}
 
 	
@@ -44,7 +43,6 @@ class SlyCropEntropy extends SlyCrop {
 	 */
 	protected function getEntropyOffsets(Imagick $original, $targetWidth, $targetHeight) {
 		$measureImage = clone($original);
-		#$measureImage = $original;
 		// Enhance edges
 		$measureImage->edgeimage(1);
 		// Turn image into a grayscale
@@ -74,6 +72,7 @@ class SlyCropEntropy extends SlyCrop {
 		// Just an arbitrary size of slice size, e.g: for 200X300 this is equal to slicing
 		// it in 6.7 times on the width and 10 times on the height
 		$sliceSize = ceil($this->area($image) / (1024 * 2));
+		$sliceSize = $targetWidth;
 		
 		$leftSlice = null;
 		$rightSlice = null;

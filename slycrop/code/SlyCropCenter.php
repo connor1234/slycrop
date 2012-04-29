@@ -33,15 +33,10 @@ class SlyCropCenter extends SlyCrop {
 	public function resizeAndCrop($targetWidth, $targetHeight) {
 		// First get the size that we can use to safely trim down the image to
 		// without cropping any sides
-		$crop = $this->getSafeResizeOffset($this->origalImage, $targetWidth, $targetHeight);
-		$this->origalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
-		$offset = $this->getCenterOffset($this->origalImage, $targetWidth, $targetHeight);
-		$this->origalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
-		#$image->setImageCompression(imagick::COMPRESSION_JPEG);
-		#$image->setImageCompressionQuality(75);
-		#$image->contrastImage( 1 );
-		#$image->adaptiveBlurImage( 1, 1 );
-		#$image->stripImage();
-		return $this->origalImage;
+		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
+		$this->originalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
+		$offset = $this->getCenterOffset($this->originalImage, $targetWidth, $targetHeight);
+		$this->originalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
+		return $this->originalImage;
 	}
 }

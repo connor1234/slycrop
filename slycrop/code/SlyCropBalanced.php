@@ -16,13 +16,13 @@ class SlyCropBalanced extends SlyCrop{
 
 		// First get the size that we can use to safely trim down the image to
 		// without cropping any sides
-		$crop = $this->getSafeResizeOffset($this->origalImage, $targetWidth, $targetHeight);
+		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
 
 		// Get the offset for cropping the image further
-		$this->origalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
-		$offset = $this->getRandomEdgeOffset($this->origalImage, $targetWidth, $targetHeight);
-		$this->dot($this->origalImage, $offset['x'], $offset['y'], 'green');
-		return $this->origalImage;
+		$this->originalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
+		$offset = $this->getRandomEdgeOffset($this->originalImage, $targetWidth, $targetHeight);
+		$this->originalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
+		return $this->originalImage;
 	}
 
 	/**
@@ -34,7 +34,6 @@ class SlyCropBalanced extends SlyCrop{
 	 */
 	protected function getRandomEdgeOffset(Imagick $original, $targetWidth, $targetHeight) {
 		$measureImage = clone($original);
-		#$measureImage = $original;
 		// Enhance edges
 		$measureImage->edgeimage($radius = 1);
 		// Turn image into a grayscale
@@ -42,78 +41,102 @@ class SlyCropBalanced extends SlyCrop{
 		// Turn everything darker than this to pitch black
 		$measureImage->blackThresholdImage("#101010");
 		// Get the calculated offset for cropping
-		return $this->getOffsetFromRandomEdge($measureImage, $targetWidth, $targetHeight);
+		return $this->getOffsetBalanced($targetWidth, $targetHeight);
 	}
 
-	public function getOffsetFromRandomEdge($targetWidth, $targetHeight) {
+	/**
+	 *
+	 * @param int $targetWidth
+	 * @param int $targetHeight
+	 * @return array
+	 */
+	public function getOffsetBalanced($targetWidth, $targetHeight) {
 
-		$goalY = $goalX = 0;
-		$size = $this->origalImage->getImageGeometry();
+		$size = $this->originalImage->getImageGeometry();
 
 		$points = array();
-
 
 		$halfWidth = ceil($size['width']/2);
 		$halfHeight = ceil($size['height']/2);
 
-		$clone = clone($this->origalImage);
+		// First quadrant
+		$clone = clone($this->originalImage);
 		$clone->cropimage($halfWidth, $halfHeight, 0, 0);
 		$point = $this->getHighestEnergyPoint($clone);
-
 		$points[] = array('x' => $point['x'], 'y' => $point['y'], 'sum' => $point['sum']);
 
-		$clone = clone($this->origalImage);
+		// Second quadrant
+		$clone = clone($this->originalImage);
 		$clone->cropimage($halfWidth, $halfHeight, $halfWidth, 0);
 		$point = $this->getHighestEnergyPoint($clone);
-
 		$points[] = array('x' => $point['x']+$halfWidth, 'y' => $point['y'], 'sum' => $point['sum']);
 
-		$clone = clone($this->origalImage);
+		// Third quadrant
+		$clone = clone($this->originalImage);
 		$clone->cropimage($halfWidth, $halfHeight, 0, $halfHeight);
 		$point = $this->getHighestEnergyPoint($clone);
-
 		$points[] = array('x' => $point['x'], 'y' => $point['y']+$halfHeight, 'sum' => $point['sum']);
 
-		$clone = clone($this->origalImage);
+		// Fourth quadrant
+		$clone = clone($this->originalImage);
 		$clone->cropimage($halfWidth, $halfHeight, $halfWidth, $halfHeight);
 		$point = $point = $this->getHighestEnergyPoint($clone);
-
 		$points[] = array('x' => $point['x']+$halfWidth, 'y' => $point['y']+$halfHeight, 'sum' => $point['sum']);
 
-		$totalEnergy = array_reduce($points, function($result, $array){
+		// get the totalt sum value so we can find out a mean center point
+		$totalWeight = array_reduce($points, function($result, $array){
 			return $result + $array['sum'];
 		});
 
-		foreach($points as $point) {
-			$circle= new ImagickDraw();$circle->setFillColor("red");
-			$circle->circle($point['x'], $point['y'], $point['x'],$point['y']+2);
-			$this->origalImage->drawImage($circle);
+		$centerX = 0; $centerY = 0;
+
+		// Calulate the mean weighted center x and y
+		for($idx=0; $idx < count($points); $idx++) {
+			$centerX += $points[$idx]['x'] * ($points[$idx]['sum'] / $totalWeight);
+			$centerY += $points[$idx]['y'] * ($points[$idx]['sum'] / $totalWeight);
 		}
 
-		$sumX = 0; $sumY = 0;
-		for($idx=0;$idx<count($points);$idx++) {
-			$points[$idx]['w_sum'] = $points[$idx]['sum']/$totalEnergy;
-			$sumX += $points[$idx]['x'] * $points[$idx]['w_sum'];
-			$sumY += $points[$idx]['y'] * $points[$idx]['w_sum'];
-		}
-		$centerX = $sumX ;
-		$centerY = $sumY ;
+		// From the weighted center point to the topleft corner of the crop would be
+		$topleftX = max(0, ($centerX - $targetWidth / 2));
+		$topleftY = max(0, ($centerY - $targetHeight / 2));
 
-		return array('x'=>$centerX, 'y'=>$centerY);
+		// If we don't have enough width for the crop, back up $topleftX until
+		// we can make the image meet $targetWidth
+		if($topleftX + $targetWidth > $size['width']){
+			$topleftX -= ($topleftX+$targetWidth) - $size['width'];
+		}
+		// If we don't have enough height for the crop, back up $topleftY until
+		// we can make the image meet $targetHeight
+		if($topleftY+$targetHeight > $size['height']){
+			$topleftY -= ($topleftY+$targetHeight) - $size['height'];
+		}
+
+		return array('x'=>$topleftX, 'y'=>$topleftY);
 	}
 
-	protected function getHighestEnergyPoint($image) {
+	/**
+	 *
+	 * @param type $image
+	 * @return type
+	 */
+	protected function getHighestEnergyPoint(Imagick $image) {
 		$size = $image->getImageGeometry();
 		$image->writeimage('/tmp/image');
 		$im = imagecreatefromjpeg('/tmp/image');
 		$xcenter = 0;
 		$ycenter = 0;
 		$sum = 0;
-		$n = round($size['height']*$size['width'])/100;
-		for ($k=0; $k<$n; $k++) {
-			$i = mt_rand(0,$size['width']-1);
-			$j = mt_rand(0,$size['height']-1);
-			$val = imagecolorat($im, $i, $j) & 0xFF;
+		$sampleSize = round($size['height']*$size['width'])/100;
+		for ($k=0; $k<$sampleSize; $k++) {
+			$i = mt_rand(0, $size['width']-1);
+			$j = mt_rand(0, $size['height']-1);
+
+			$rgb = imagecolorat($im, $i, $j);
+			$r = ($rgb >> 16) & 0xFF;
+			$g = ($rgb >> 8) & 0xFF;
+			$b = $rgb & 0xFF;
+
+			$val = $this->rgb2bw($r, $g, $b);
 			$sum += $val;
 			$xcenter += ($i+1)*$val;
 			$ycenter += ($j+1)*$val;
@@ -127,6 +150,17 @@ class SlyCropBalanced extends SlyCrop{
 		$point = array('x' => $xcenter, 'y' => $ycenter, 'sum' => $sum/round($size['height']*$size['width']));
 
 		return $point;
+	}
 
+	/**
+	 * Returns a YUV weighted greyscale value
+	 *
+	 * @param int $r
+	 * @param int $g
+	 * @param int $b
+	 * @return int
+	 */
+	protected function rgb2bw($r, $g, $b) {
+		return ($r*0.299)+($g*0.587)+($b*0.114);
 	}
 }
