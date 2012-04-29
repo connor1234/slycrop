@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Slycrop by stojg</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/stojg/slycrop">Fork On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/stojg/slycrop/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/stojg/slycrop/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>Slycrop</h1>
+          <p>Experiment on how common algorithms for image processing and cropping can be implemented in PHP.</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/stojg">stojg</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="http://twitter.com/#!/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h1>Sly Crop</h1>
+
+<p>A couple of PHP classes to crop images to a fixed widht and height using different variants of cropping techniques without changing the aspect ratio.</p>
+
+<p>Just for ease of testing and development it's currently implemented as a SilverStripe Framework module, but the main classes can be used independently.</p>
+
+<h3>Croppers implemented</h3>
+
+<ul>
+<li>
+<a href="https://github.com/stojg/slycrop/blob/master/slycrop/code/SlyCropCenter.php">SlyCropCenter</a> Crop the image around the center of the image</li>
+<li>
+<a href="https://github.com/stojg/slycrop/blob/master/slycrop/code/SlyCropEntropy.php">SlyCropEntropy</a> Center the crop on the most edgiest location in the image </li>
+<li>
+<a href="https://github.com/stojg/slycrop/blob/master/slycrop/code/SlyCropBalanced.php">SlyCropBalanced</a> Center the crop based on a weighted edgiest point in the image</li>
+</ul><h3>Todo and ideas</h3>
+
+<ul>
+<li>Facedetection cropping</li>
+<li>Using more sample points for the SlyCropBalanced cropper</li>
+<li>Refactor to be more DRY</li>
+<li>Find the most interesting square in the image and tightly crop around it</li>
+</ul><h3>Kudos</h3>
+
+<p>Kudos goes to these people for example code and explanations:</p>
+
+<ul>
+<li>Jue Wang - <a href="http://jueseph.com/2010/06/opticrop-content-aware-cropping-with-php-and-imagemagick/">Opticrop</a>
+</li>
+<li>Peter Sobot - <a href="http://petersobot.com/blog/a-use-for-smartphone-photos/">A Use for Smartphone Photos</a>
+</li>
+<li>zaeleus - <a href="https://gist.github.com/a54cd41137b678935c91">Content Aware Kropping by Entropy</a>
+</li>
+</ul>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-20319066-5");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
