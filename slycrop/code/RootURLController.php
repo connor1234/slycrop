@@ -1,7 +1,13 @@
 <?php
-
+/**
+ * A SilverStripe root url controller
+ */
 class RootURLController extends Controller {
 
+	/**
+	 * Thumbnail all images in assets/originals and save them in assets/thumbs/
+	 *
+	 */
 	public function index() {
 		$width = 100;
 		$height = 200;
@@ -12,11 +18,12 @@ class RootURLController extends Controller {
 		$to = ASSETS_PATH.'/thumbs/';
 		$thumbnailDir = ASSETS_DIR.'/thumbs/';
 
-		
+		// Start profiling timer
 		SlyCrop::start();
 		foreach($files as $filePath) {
 			$fileInfo = pathinfo($filePath);
 
+			// Run the SlyCropEntropy cropper
 			$entropy = new SlyCropEntropy($filePath);
 			$croppedImage = $entropy->resizeAndCrop($width, $height);
 			$thumbnailPath = '/thumbs/'.$fileInfo['filename'].'-entropy.jpg';
@@ -24,7 +31,7 @@ class RootURLController extends Controller {
 			$croppedImage->writeimage(ASSETS_PATH.$thumbnailPath);
 			$images[] = new ArrayData(array('FilePath'=>ASSETS_DIR.$thumbnailPath, 'Method'=>'entropy', 'Width'=>$width));
 
-
+			// Run the SlyCropCenter cropper
 			$center = new SlyCropCenter($filePath);
 			$croppedImage = $center->resizeAndCrop($width, $height);
 			$thumbnailPath = '/thumbs/'.$fileInfo['filename'].'-center.jpg';
@@ -32,7 +39,7 @@ class RootURLController extends Controller {
 			$croppedImage->writeimage(ASSETS_PATH.$thumbnailPath);
 			$images[] = new ArrayData(array('FilePath'=>ASSETS_DIR.$thumbnailPath, 'Method'=>'center', 'Width'=>$width));
 			
-			
+			// Run the SlyCropBalanced cropper
 			$center = new SlyCropBalanced($filePath);
 			$croppedImage = $center->resizeAndCrop($width, $height);
 			$thumbnailPath = '/thumbs/'.$fileInfo['filename'].'-balanced.jpg';
@@ -41,7 +48,7 @@ class RootURLController extends Controller {
 			$images[] = new ArrayData(array('FilePath'=>ASSETS_DIR.$thumbnailPath, 'Method'=>'balanced', 'Width'=>$width));
 
 		}
-
+		
 		return $this->customise(new ArrayData(array(
 			'Timer' => SlyCrop::mark(),
 			'Images'=> new ArrayList($images)
@@ -49,6 +56,7 @@ class RootURLController extends Controller {
 	}
 
 	/**
+	 * Do some tricks to cleanup and minimize the thumbnails size
 	 *
 	 * @param Imagick $image
 	 */
