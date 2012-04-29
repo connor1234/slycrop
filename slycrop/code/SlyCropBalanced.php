@@ -2,6 +2,14 @@
 /**
  * SlyCropBalanced
  *
+ * This class calculates the most interesting point in the image by:
+ *
+ * 1. Dividing the image into four equally squares
+ * 2. Find the most energetic point per square
+ * 3. Finding the images weighted mean interest point
+ *
+ * @todo Refactor to make cleaner
+ * @todo Rename the class to something more sensible
  */
 class SlyCropBalanced extends SlyCrop{
 
@@ -14,13 +22,13 @@ class SlyCropBalanced extends SlyCrop{
 	 */
 	public function resizeAndCrop($targetWidth, $targetHeight) {
 
-		// First get the size that we can use to safely trim down the image to
-		// without cropping any sides
+		// First get the size that we can use to safely trim down the image without cropping any sides
 		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
-
-		// Get the offset for cropping the image further
+		// Resize the image
 		$this->originalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
+		// Get the offset for cropping the image further
 		$offset = $this->getRandomEdgeOffset($this->originalImage, $targetWidth, $targetHeight);
+		// Crop the image
 		$this->originalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
 		return $this->originalImage;
 	}
@@ -49,6 +57,7 @@ class SlyCropBalanced extends SlyCrop{
 	 * @param int $targetWidth
 	 * @param int $targetHeight
 	 * @return array
+	 * @todo refactor so it follows DRY
 	 */
 	public function getOffsetBalanced($targetWidth, $targetHeight) {
 
@@ -115,22 +124,27 @@ class SlyCropBalanced extends SlyCrop{
 	}
 
 	/**
+	 * By doing random sampling from the image, find the most energetic point on the passed in
+	 * image
 	 *
 	 * @param type $image
 	 * @return type
 	 */
 	protected function getHighestEnergyPoint(Imagick $image) {
 		$size = $image->getImageGeometry();
+		// It's more performant doing random pixel uplook via GD
 		$image->writeimage('/tmp/image');
 		$im = imagecreatefromjpeg('/tmp/image');
 		$xcenter = 0;
 		$ycenter = 0;
 		$sum = 0;
+		// Sample 1/100 of all the pixels
 		$sampleSize = round($size['height']*$size['width'])/100;
+		
 		for ($k=0; $k<$sampleSize; $k++) {
 			$i = mt_rand(0, $size['width']-1);
 			$j = mt_rand(0, $size['height']-1);
-
+			
 			$rgb = imagecolorat($im, $i, $j);
 			$r = ($rgb >> 16) & 0xFF;
 			$g = ($rgb >> 8) & 0xFF;
@@ -159,6 +173,7 @@ class SlyCropBalanced extends SlyCrop{
 	 * @param int $g
 	 * @param int $b
 	 * @return int
+	 * @todo push this method up into parent class
 	 */
 	protected function rgb2bw($r, $g, $b) {
 		return ($r*0.299)+($g*0.587)+($b*0.114);
