@@ -26,15 +26,18 @@ class SlyCropEntropy extends SlyCrop {
 		// First get the size that we can use to safely trim down the image to
 		// without cropping any sides
 		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
-		// Get the offset for cropping the image further
+		// Resize the image 'safely'
 		$this->originalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
+		// Get the offset for cropping the image further
 		$offset = $this->getEntropyOffsets($this->originalImage, $targetWidth, $targetHeight);
+		// Crop the image
 		$this->originalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
 		return $this->originalImage;
 	}
 
 	
 	/**
+	 * Get the topleftX and topleftY that will can be passed to a cropping method.
 	 *
 	 * @param Imagick $original
 	 * @param int $targetWidth
@@ -66,35 +69,35 @@ class SlyCropEntropy extends SlyCrop {
 		$size = $image->getImageGeometry();
 		$originalWidth = $rightX = $size['width'];
 		$originalHeight = $bottomY = $size['height'];
+		// This is going to be our goal for topleftY
 		$topY = 0;
+		// This is going to be our goal for topleftX
 		$leftX = 0;
 
 		// Just an arbitrary size of slice size, e.g: for 200X300 this is equal to slicing
 		// it in 6.7 times on the width and 10 times on the height
 		$sliceSize = ceil($this->area($image) / (1024 * 2));
-		$sliceSize = $targetWidth;
-		
+				
 		$leftSlice = null;
 		$rightSlice = null;
 
-		// while there still are uninvestigated areas of the image
+		// while there still are uninvestigated slices of the image
 		while($rightX-$leftX > $targetWidth) {
 			// Make sure that we don't try to slice outside the picture
 			$sliceSize = min(array(($rightX-$leftX-$targetWidth), $sliceSize));
 
-			// Left slice
+			// Make a left slice image
 			if(!$leftSlice) {
 				$leftSlice = clone($image);
 				$leftSlice->cropImage($sliceSize, $originalHeight, $leftX, 0);
 			}
-			// Right slice
+			// Make a right slice image
 			if(!$rightSlice) {
 				$rightSlice = clone($image);
 				$rightSlice->cropImage($sliceSize, $originalHeight, $rightX - $sliceSize, 0);
 			}
 			// rightSlice has more entropy, so remove leftSlice and bump leftX to the right
 			if($this->grayscaleEntropy($leftSlice) < $this->grayscaleEntropy($rightSlice)) {
-
 				$leftX += $sliceSize;
 				$leftSlice = null;
 			} else {
@@ -106,17 +109,17 @@ class SlyCropEntropy extends SlyCrop {
 		$topSlice = null;
 		$bottomSlice = null;
 
-		// while there still are uninvestigated areas of the image
+		// while there still are uninvestigated slices of the image
 		while($bottomY-$topY > $targetHeight) {
 			// Make sure that we don't try to slice outside the picture
 			$slizeSize = min(array($bottomY - $topY - $targetHeight, $sliceSize));
 
-			// Make a top slice
+			// Make a top slice image
 			if(!$topSlice) {
 				$topSlice = clone($image);
 				$topSlice->cropImage($originalWidth, $slizeSize, 0, $topY);
 			}
-			// Make a bottom slice
+			// Make a bottom slice image
 			if(!$bottomSlice) {
 				$bottomSlice = clone($image);
 				$bottomSlice->cropImage($originalWidth, $slizeSize, 0, $bottomY - $slizeSize);
@@ -143,26 +146,36 @@ class SlyCropEntropy extends SlyCrop {
 	 * @return float
 	 *
 	 * @see http://brainacle.com/calculating-image-entropy-with-python-how-and-why.html
+	 * @see http://www.mathworks.com/help/toolbox/images/ref/entropy.html
 	 */
 	protected function grayscaleEntropy(Imagick $image) {
 		$area = $this->area($image);
+		// The histogram consists of a list of 0-254 and the number of pixels that has that value
 		$histogram = $image->getImageHistogram();
+		
 		$value = 0.0;
-
+		
 		for($idx = 0; $idx < count($histogram); $idx++) {
+			// calculates the percentage of pixels having this color value
 			$p = $histogram[$idx]->getColorCount() / $area;
+			// A common way of representing entropy in scalar
 			$value = $value + $p * log($p, 2);
 		}
-
+		// $value is always 0.0 or negative, so transform into positive scalar value
 		return -$value;
 	}
 
 	/**
 	 * Find out the entropy for a color image by taking into account the YUV color
-	 * model: http://en.wikipedia.org/wiki/YUV
+	 * model.
+	 * 
+	 * If the source image is in color we need to transform RGB into a grayscale image
+	 * so we can calculate the entropy more performant.
 	 *
 	 * @param Imagick $image
 	 * @return float
+	 * @see http://en.wikipedia.org/wiki/YUV
+	 * @todo extract the entropy algo to a method
 	 */
 	protected function colorEntropy(Imagick $image) {
 		$area = $this->area($image);
@@ -173,6 +186,7 @@ class SlyCropEntropy extends SlyCrop {
 
 		for($idx = 0; $idx < count($histogram); $idx++) {
 			$colors = $histogram[$idx]->getColor();
+			// This is a common way to translate RGB into BW using YUV 
 			$grey = (($colors['r']*0.299)+($colors['g']*0.587)+($colors['b']*0.114));
 
 			if(!isset($result[$grey])) {
