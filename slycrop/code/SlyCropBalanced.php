@@ -14,6 +14,7 @@
 class SlyCropBalanced extends SlyCrop{
 
 	/**
+	 * Resize and crop the image so it dimensions matches $targetWidth and $targetHeight
 	 *
 	 * @param string $imagePath
 	 * @param int $targetWidth
@@ -21,7 +22,6 @@ class SlyCropBalanced extends SlyCrop{
 	 * @return boolean|\Imagick
 	 */
 	public function resizeAndCrop($targetWidth, $targetHeight) {
-
 		// First get the size that we can use to safely trim down the image without cropping any sides
 		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
 		// Resize the image
@@ -164,18 +164,5 @@ class SlyCropBalanced extends SlyCrop{
 		$point = array('x' => $xcenter, 'y' => $ycenter, 'sum' => $sum/round($size['height']*$size['width']));
 
 		return $point;
-	}
-
-	/**
-	 * Returns a YUV weighted greyscale value
-	 *
-	 * @param int $r
-	 * @param int $g
-	 * @param int $b
-	 * @return int
-	 * @todo push this method up into parent class
-	 */
-	protected function rgb2bw($r, $g, $b) {
-		return ($r*0.299)+($g*0.587)+($b*0.114);
 	}
 }

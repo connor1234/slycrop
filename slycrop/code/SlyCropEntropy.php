@@ -149,58 +149,36 @@ class SlyCropEntropy extends SlyCrop {
 	 * @see http://www.mathworks.com/help/toolbox/images/ref/entropy.html
 	 */
 	protected function grayscaleEntropy(Imagick $image) {
-		$area = $this->area($image);
+		
 		// The histogram consists of a list of 0-254 and the number of pixels that has that value
 		$histogram = $image->getImageHistogram();
 		
-		$value = 0.0;
-		
-		for($idx = 0; $idx < count($histogram); $idx++) {
-			// calculates the percentage of pixels having this color value
-			$p = $histogram[$idx]->getColorCount() / $area;
-			// A common way of representing entropy in scalar
-			$value = $value + $p * log($p, 2);
-		}
-		// $value is always 0.0 or negative, so transform into positive scalar value
-		return -$value;
+		return $this->getEntropy($histogram, $this->area($image));
 	}
 
 	/**
-	 * Find out the entropy for a color image by taking into account the YUV color
-	 * model.
+	 * Find out the entropy for a color image
 	 * 
 	 * If the source image is in color we need to transform RGB into a grayscale image
 	 * so we can calculate the entropy more performant.
 	 *
 	 * @param Imagick $image
 	 * @return float
-	 * @see http://en.wikipedia.org/wiki/YUV
-	 * @todo extract the entropy algo to a method
 	 */
 	protected function colorEntropy(Imagick $image) {
-		$area = $this->area($image);
 		$histogram = $image->getImageHistogram();
-		$value = 0.0;
-
 		$newHistogram = array();
 
+		// Translates a color histogram into a bw histogram
 		for($idx = 0; $idx < count($histogram); $idx++) {
 			$colors = $histogram[$idx]->getColor();
-			// This is a common way to translate RGB into BW using YUV 
-			$grey = (($colors['r']*0.299)+($colors['g']*0.587)+($colors['b']*0.114));
-
-			if(!isset($result[$grey])) {
+			$grey = $this->rgb2bw($colors['r'], $colors['g'], $colors['b']);
+			if(!isset($newHistogram[$grey])) {
 				$newHistogram[$grey] = $histogram[$idx]->getColorCount();
 			} else {
 				$newHistogram[$grey] += $histogram[$idx]->getColorCount();
 			}
 		}
-
-		foreach($newHistogram as $colorCount) {
-			$p = $colorCount / $area;
-			$value = $value + $p * log($p, 2);
-		}
-
-		return -$value;
+		return $this->entropy($newHistogram, $this->area($image));
 	}
 }

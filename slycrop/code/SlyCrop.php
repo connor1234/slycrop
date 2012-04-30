@@ -83,7 +83,7 @@ class SlyCrop {
 	}
 
 	/**
-	 * Put a dot on the image, good for debugging
+	 * Put a dot on the image, used for debugging.
 	 *
 	 * @param Imagick $image
 	 * @param int $x
@@ -94,5 +94,37 @@ class SlyCrop {
 		$circle= new ImagickDraw();$circle->setFillColor($color);
 		$circle->circle($x, $y, $x, $y+6);
 		$image->drawImage($circle);
+	}
+
+	/**
+	 * Returns a YUV weighted greyscale value
+	 *
+	 * @param int $r
+	 * @param int $g
+	 * @param int $b
+	 * @return int
+	 * @see http://en.wikipedia.org/wiki/YUV
+	 */
+	protected function rgb2bw($r, $g, $b) {
+		return ($r*0.299)+($g*0.587)+($b*0.114);
+	}
+
+	/**
+	 *
+	 * @param array $histogram - a value[count] array
+	 * @param int $area
+	 * @return float
+	 */
+	protected function getEntropy($histogram, $area) {
+		$value = 0.0;
+
+		for($idx = 0; $idx < count($histogram); $idx++) {
+			// calculates the percentage of pixels having this color value
+			$p = $histogram[$idx]->getColorCount() / $area;
+			// A common way of representing entropy in scalar
+			$value = $value + $p * log($p, 2);
+		}
+		// $value is always 0.0 or negative, so transform into positive scalar value
+		return -$value;
 	}
 }
