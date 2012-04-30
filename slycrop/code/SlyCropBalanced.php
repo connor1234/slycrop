@@ -138,8 +138,8 @@ class SlyCropBalanced extends SlyCrop{
 		$xcenter = 0;
 		$ycenter = 0;
 		$sum = 0;
-		// Sample 1/100 of all the pixels
-		$sampleSize = round($size['height']*$size['width'])/100;
+		// Sample 1/10 of all the pixels
+		$sampleSize = round($size['height']*$size['width'])/10;
 		
 		for ($k=0; $k<$sampleSize; $k++) {
 			$i = mt_rand(0, $size['width']-1);
