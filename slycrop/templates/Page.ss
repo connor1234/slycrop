@@ -17,15 +17,17 @@
 <body>
   <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
   <header>
-	  It took $Timer to crop these images
+	  $Timer
   </header>
   <div role="main">
 	  <% loop Images %>
-	  <div class="image" style="width: $Width">
+	  <div class="image" style="width: $Width" class="column-{$Modulus(4)}">
 		  <img src="$FilePath" />
 		  <div>$Method</div>
 	  </div>
-		
+	  <% if MultipleOf(3) %>
+	  <div style="clear:both;"></div>
+    <% end_if %>
 	  <% end_loop %>
   </div>
   <footer>

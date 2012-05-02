@@ -7,7 +7,7 @@ audio:not([controls]) { display: none; }
 
 html { font-size: 100%; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
 html, button, input, select, textarea { font-family: sans-serif; color: #222; }
-body { margin: 0; font-size: 1em; line-height: 1.4; }
+body { margin: 0; font-size: 0.8em; line-height: 1.2; }
 
 ::-moz-selection { background: #fe57a1; color: #fff; text-shadow: none; }
 ::selection { background: #fe57a1; color: #fff; text-shadow: none; }
@@ -64,16 +64,24 @@ td { vertical-align: top; }
 
 .chromeframe { margin: 0.2em 0; background: #ccc; color: black; padding: 0.2em 0; }
 
+body {
+	background: #111;
+}
 
+.image {
+	float:left;
+	border:1px solid #000;
+	margin: 0 1px 1px 0;
+}
 
-
-
+.image div {
+	text-align:center;
+}
 
 
 
 
 @media only screen and (min-width: 35em) {
-  
 
 }
 
@@ -100,15 +108,4 @@ td { vertical-align: top; }
   @page { margin: 0.5cm; }
   p, h2, h3 { orphans: 3; widows: 3; }
   h2, h3 { page-break-after: avoid; }
-}
-
-
-.image {
-	float:left;
-	border:1px solid #000;
-	margin: 0 1px 1px 0;
-}
-
-.image div {
-	text-align:center;
 }

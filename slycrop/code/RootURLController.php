@@ -9,7 +9,7 @@ class RootURLController extends Controller {
 	 *
 	 */
 	public function index() {
-		$width = 100;
+		$width = 200;
 		$height = 100;
 
 		$files = glob(ASSETS_PATH.'/originals/*');
