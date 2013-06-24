@@ -75,7 +75,7 @@ abstract class SlyCrop {
 		// First get the size that we can use to safely trim down the image without cropping any sides
 		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
 		// Resize the image
-		$this->originalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
+		$this->originalImage->adaptiveResizeImage($crop['width'], $crop['height']);
 		// Get the offset for cropping the image further
 		$offset = $this->getSpecialOffset($this->originalImage, $targetWidth, $targetHeight);
 		// Crop the image
