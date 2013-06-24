@@ -15,25 +15,16 @@
 class SlyCropEntropy extends SlyCrop {
 
 	/**
+	 * get special offset for class
 	 *
-	 * @param string $imagePath
+	 * @param Imagick $original
 	 * @param int $targetWidth
 	 * @param int $targetHeight
-	 * @return Imagick
+	 * @return array
 	 */
-	public function resizeAndCrop($targetWidth, $targetHeight ) {
-
-		// First get the size that we can use to safely trim down the image to
-		// without cropping any sides
-		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
-		// Resize the image 'safely'
-		$this->originalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
-		// Get the offset for cropping the image further
-		$offset = $this->getEntropyOffsets($this->originalImage, $targetWidth, $targetHeight);
-		// Crop the image
-		$this->originalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
-		return $this->originalImage;
-	}
+    protected function getSpecialOffset(Imagick $original, $targetWidth, $targetHeight) {
+		return $this->getEntropyOffsets($original, $targetWidth, $targetHeight);
+    }
 
 	
 	/**

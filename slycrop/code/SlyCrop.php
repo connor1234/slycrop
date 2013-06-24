@@ -5,7 +5,7 @@
  * Base class for all Croppers
  *
  */
-class SlyCrop {
+abstract class SlyCrop {
 
 	/**
 	 *
@@ -61,6 +61,26 @@ class SlyCrop {
 	protected function area(Imagick $image) {
 		$size = $image->getImageGeometry();
 		return $size['height'] * $size['width'];
+	}
+
+	/**
+	 * Resize and crop the image so it dimensions matches $targetWidth and $targetHeight
+	 *
+	 * @param string $imagePath
+	 * @param int $targetWidth
+	 * @param int $targetHeight
+	 * @return boolean|\Imagick
+	 */
+	public function resizeAndCrop($targetWidth, $targetHeight) {
+		// First get the size that we can use to safely trim down the image without cropping any sides
+		$crop = $this->getSafeResizeOffset($this->originalImage, $targetWidth, $targetHeight);
+		// Resize the image
+		$this->originalImage->resizeImage($crop['width'], $crop['height'], Imagick::FILTER_CATROM, 0.5);
+		// Get the offset for cropping the image further
+		$offset = $this->getSpecialOffset($this->originalImage, $targetWidth, $targetHeight);
+		// Crop the image
+		$this->originalImage->cropImage($targetWidth, $targetHeight, $offset['x'], $offset['y']);
+		return $this->originalImage;
 	}
 
 	/**
@@ -127,4 +147,14 @@ class SlyCrop {
 		// $value is always 0.0 or negative, so transform into positive scalar value
 		return -$value;
 	}
+
+	/**
+	 * get special offset for class
+	 *
+	 * @param Imagick $original
+	 * @param int $targetWidth
+	 * @param int $targetHeight
+	 * @return array
+	 */
+    abstract protected function getSpecialOffset(Imagick $original, $targetWidth, $targetHeight);
 }
