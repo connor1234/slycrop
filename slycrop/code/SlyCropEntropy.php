@@ -22,9 +22,9 @@ class SlyCropEntropy extends SlyCrop {
 	 * @param int $targetHeight
 	 * @return array
 	 */
-    protected function getSpecialOffset(Imagick $original, $targetWidth, $targetHeight) {
+	protected function getSpecialOffset(Imagick $original, $targetWidth, $targetHeight) {
 		return $this->getEntropyOffsets($original, $targetWidth, $targetHeight);
-    }
+	}
 
 	
 	/**
@@ -56,8 +56,13 @@ class SlyCropEntropy extends SlyCrop {
 	 * @param int $sliceSize
 	 * @return array
 	 */
-	protected function getOffsetFromEntropy(Imagick $image, $targetWidth, $targetHeight) {
+	protected function getOffsetFromEntropy(Imagick $originalImage, $targetWidth, $targetHeight) {
+        // The entropy works better on a blured image
+		$image = clone $originalImage;
+		$image->blurImage(3,2);
+
 		$size = $image->getImageGeometry();
+
 		$originalWidth = $rightX = $size['width'];
 		$originalHeight = $bottomY = $size['height'];
 		// This is going to be our goal for topleftY
@@ -65,9 +70,8 @@ class SlyCropEntropy extends SlyCrop {
 		// This is going to be our goal for topleftX
 		$leftX = 0;
 
-		// Just an arbitrary size of slice size, e.g: for 200X300 this is equal to slicing
-		// it in 6.7 times on the width and 10 times on the height
-		$sliceSize = ceil($this->area($image) / (1024 * 2));
+		// Just an arbitrary size of slice size
+		$sliceSize = ceil(($originalWidth - $targetWidth) / 25);
 				
 		$leftSlice = null;
 		$rightSlice = null;
@@ -75,18 +79,20 @@ class SlyCropEntropy extends SlyCrop {
 		// while there still are uninvestigated slices of the image
 		while($rightX-$leftX > $targetWidth) {
 			// Make sure that we don't try to slice outside the picture
-			$sliceSize = min(array(($rightX-$leftX-$targetWidth), $sliceSize));
+			$sliceSize = min($rightX - $leftX - $targetWidth, $sliceSize);
 
 			// Make a left slice image
 			if(!$leftSlice) {
 				$leftSlice = clone($image);
 				$leftSlice->cropImage($sliceSize, $originalHeight, $leftX, 0);
 			}
+
 			// Make a right slice image
 			if(!$rightSlice) {
 				$rightSlice = clone($image);
 				$rightSlice->cropImage($sliceSize, $originalHeight, $rightX - $sliceSize, 0);
 			}
+
 			// rightSlice has more entropy, so remove leftSlice and bump leftX to the right
 			if($this->grayscaleEntropy($leftSlice) < $this->grayscaleEntropy($rightSlice)) {
 				$leftX += $sliceSize;
@@ -100,29 +106,33 @@ class SlyCropEntropy extends SlyCrop {
 		$topSlice = null;
 		$bottomSlice = null;
 
+		// Just an arbitrary size of slice size
+		$sliceSize = ceil(($originalHeight - $targetHeight) / 25);
+				
 		// while there still are uninvestigated slices of the image
 		while($bottomY-$topY > $targetHeight) {
 			// Make sure that we don't try to slice outside the picture
-			$slizeSize = min(array($bottomY - $topY - $targetHeight, $sliceSize));
+			$sliceSize = min($bottomY - $topY - $targetHeight, $sliceSize);
 
 			// Make a top slice image
 			if(!$topSlice) {
 				$topSlice = clone($image);
-				$topSlice->cropImage($originalWidth, $slizeSize, 0, $topY);
+				$topSlice->cropImage($originalWidth, $sliceSize, 0, $topY);
 			}
 			// Make a bottom slice image
 			if(!$bottomSlice) {
 				$bottomSlice = clone($image);
-				$bottomSlice->cropImage($originalWidth, $slizeSize, 0, $bottomY - $slizeSize);
+				$bottomSlice->cropImage($originalWidth, $sliceSize, 0, $bottomY - $sliceSize);
 			}
 			// bottomSlice has more entropy, so remove topSlice and bump topY down 
 			if($this->grayscaleEntropy($topSlice) < $this->grayscaleEntropy($bottomSlice)) {
-				$topY += $slizeSize;
+				$topY += $sliceSize;
 				$topSlice = null;
 			} else {
-				$bottomY -= $slizeSize;
+				$bottomY -= $sliceSize;
 				$bottomSlice = null;
 			}
+
 		}
 
 		return array('x' => $leftX, 'y' => $topY);
